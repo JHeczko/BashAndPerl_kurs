@@ -9,7 +9,7 @@ Oczekiwany poziom techniczny: odczytywanie argumentów linii, poleceń, wyrażen
 ```       
 bash@user1: ./skrypt 2 7
 
-   2   3   4   5   6   7
+    2   3   4   5   6   7
 2   4   6   8  10  12  14
 3   6   9  12  15  18  21
 4   8  12  16  20  24  28
@@ -21,7 +21,7 @@ bash@user1: ./skrypt 2 7
 ```       
 bash@user1: ./skrypt 7
 
-   1   2   3   4   5   6   7
+    1   2   3   4   5   6   7
 1   1   2   3   4   5   6   7
 2   2   4   6   8  10  12  14
 3   3   6   9  12  15  18  21
@@ -39,7 +39,7 @@ bash@user1: ./skrypt 7 4
 ## Pisanie tego programu jest dobrą okazją do poznania garści dobrych praktyk:
 1. Proszę wywołać `set --help`. Wywołanie polecenia `set` na początku skryptu ustawia zachowanie interpretera bash. Bash domyślnie ustawiony jest na ignorowanie błędów i traktowanie nieustawionych zmiennych jak pustych znaków. Można (i często należy) te zachowania modyfikować. Proszę ustawić skrypt by skrypt kończył pracę jeśli jakaś komenda zwróci wartość niezerową, albo zostanie użyta nieustawiona zmienna. Tych opcji nie należy stosować zamiast parsowania wejścia. Np upewnienie się, że argumenty linii poleceń zostały w ogóle przesłane nie powinno być zlecane `set`
 2. namiastką debuggera jest `set -x`
-3. polecenie bash które nie jest ścieżką można zastąpić przy pomocy "alias" np wywołanie `alias ls=rm` sprawia, że `ls plik` robi to samo co `rm plik` (lepiej tego nie testować). Mniej złośliwe sytuacje to użytkownik definiuje `alias ls=ls -la` i wtedy wywołanie `ls` nie zwraca listy plików, tylko rozszerzona listę plikow co może powodować błędne działanie skryptu. Mozna to obejść wywołując `/usr/bin/ls` a nie `ls`
+3. polecenie bash które nie jest ścieżką można zastąpić przy pomocy `alias` np wywołanie `alias ls=rm` sprawia, że `ls plik` robi to samo co `rm plik` (lepiej tego nie testować). Mniej złośliwe sytuacje to użytkownik definiuje `alias ls=ls -la` i wtedy wywołanie `ls` nie zwraca listy plików, tylko rozszerzona listę plikow co może powodować błędne działanie skryptu. Mozna to obejść wywołując `/usr/bin/ls` a nie `ls`
 4. Chcemy by skrypt po nadaniu atrybutu wykonywalności, wykonywał się w poprawnych interpreterze `./skrypt.sh`
 5. Należy sprawdzać obecność argumentów wiersza linii poleceń
 6. Nie chcemy deklaracji typu `katalog=/home/user/katalog_dane` - użytkownik nie powinien być zmuszany do modifikacji skryptu - lepiej przechowywać kluczowe ustawienia w plikach konfiguracyjnych. A już na pewno nie chcemy ścieżek zaszytych w treści skryptu - powinny być zebrane w jednym miejscu i nie w kodzie źródłowym skryptu. Te reguły podlegają odstępstwom / modyfikacjom w zależności kto jest przewidziany jako końcowy użytkownik skryptów.
