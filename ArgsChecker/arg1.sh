@@ -4,7 +4,11 @@
 getopts_string=""
 optind=""
 
-# check for unsuported q argument
+# check_for_q_apperance()
+# checkes if argument -q is in the params
+#
+# Input Arguments:
+# - all program input parameters
 function check_for_q_apperance(){
   for arg in "$@"; do
     if [[ "$arg" == "-q" ]]; then
@@ -46,14 +50,24 @@ function parse_args(){
   optind="$OPTIND"
 }
 
-
+# print_main_args()
+# prints all program options sorted alphabeticly
+#
+# Input Arguments:
+# - string with formatted option parameters (\n at the end of every option segment)
 function print_main_args() {
-  local getopts_string_nonsorted=$getopts_string
+  local getopts_string_nonsorted=$1
   local getopts_string_sorted=""
   getopts_string_sorted=$(printf "%s" "$getopts_string_nonsorted" | sort -u)
   echo "$getopts_string_sorted"
 }
 
+
+# print_rest_args()
+# printing additional arguments
+#
+# Parameters:
+# - takes all of the rest arguments that was left from parsing and are no option arguments
 function print_rest_args(){
   # printing additional arguments
   if [[ $# -gt 0 ]]; then
@@ -74,7 +88,7 @@ check_for_q_apperance "$@"
 
 parse_args "$@"
 
-print_main_args
+print_main_args "$getopts_string"
 
 # skipping the getopts parsed arguments
 shift $(($optind-1))
