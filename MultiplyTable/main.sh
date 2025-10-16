@@ -84,7 +84,7 @@ parse_input_arguments "$@"
 
 longest_word=$((second_number*second_number))
 gap=${#longest_word}
-gap=$((gap+1))
+gap=$((gap+2))
 
 print_headers "$gap"
 
