@@ -53,10 +53,10 @@ function print_rest_args(){
 # Input Arguments:
 # - string with formatted option parameters (\n at the end of every option segment)
 function print_main_args() {
-  local getopts_string_nonsorted=$1
-  local getopts_string_sorted=""
-  getopts_string_sorted=$(printf "%s" "$getopts_string_nonsorted" | sort -u)
-  echo "$getopts_string_sorted"
+  local getopt_string_nonsorted=$1
+  local getopt_string_sorted=""
+  getopt_string_sorted=$(printf "%s" "$getopt_string_nonsorted" | sort -u)
+  echo "$getopt_string_sorted"
 }
 # -=-==-=-=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-
 
@@ -78,16 +78,19 @@ ARGS=$(getopt -o abcdefghjklmnprstuvwxyzi:o: -l help -- "$@")
 # ustawienie nowych argumentów w skrypcie
 eval set -- "$ARGS"
 
-
 while true; do
   case "$1" in
     -[o,i])
-      buf='-'$1' present and set to "'$2'"'$'\n'
+      if [[ -z "$2" || "$2" == -* ]]; then
+        echo "-i -o options require a filename"
+        exit 1
+      fi
+      buf=$1' present and set to "'$2'"'$'\n'
       getopt_string+="$buf"
       shift 2
       ;;
     -[a-zA-Z])
-      buf='-'$1' present'$'\n'
+      buf=$1' present'$'\n'
       getopt_string+="$buf"
       shift 1
       ;;

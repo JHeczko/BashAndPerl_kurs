@@ -18,12 +18,24 @@ function check_for_q_apperance(){
   done
 }
 
+
+# parse_args()
+# parses all the arguments of the program and then making whole string out of them
+#
+# Input Arguments:
+# - all program input parameters
 function parse_args(){
   # creating getops string
   while getopts ":abcdefghjklmnprstuvwxyzABCDEFGHJKLMNPRSTUVWXYZi:o:" arg; do
     case "$arg" in
 
+
       [i,o])
+        # checking if the argument for option is not another argument
+        if [[ -z "$OPTARG" || "$OPTARG" == -* ]]; then
+          echo "-i -o options require a filename"
+          exit 1
+        fi
         buf='-'$arg' present and set to "'$OPTARG'"'$'\n'
         getopts_string+="$buf"
         ;;
@@ -34,11 +46,13 @@ function parse_args(){
           getopts_string+="$buf"
         ;;
 
+
       # no argument for arg options handler
       :)
         echo "-i -o options require a filename"
         exit 1
         ;;
+
 
       # not supported option handler
       \?)
