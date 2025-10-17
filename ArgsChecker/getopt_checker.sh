@@ -82,12 +82,12 @@ eval set -- "$ARGS"
 while true; do
   case "$1" in
     -[o,i])
-      buf='-'$arg' present and set to "'$OPTARG'"'$'\n'
+      buf='-'$1' present and set to "'$2'"'$'\n'
       getopt_string+="$buf"
       shift 2
       ;;
     -[a-zA-Z])
-      buf='-'$arg' present'$'\n'
+      buf='-'$1' present'$'\n'
       getopt_string+="$buf"
       shift 1
       ;;
