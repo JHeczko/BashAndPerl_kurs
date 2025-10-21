@@ -14,6 +14,7 @@ NUMBER_OF_REPLACED_DUPLICATES=0
 
 declare -A size_map
 declare -A hash_map
+declare -A cmp_map
 
 function check_for_help_apperance(){
   for arg in "$@"; do
@@ -105,6 +106,7 @@ function split() {
   printf '%s\n' "${result[@]}"
 }
 
+
 function size(){
   local file=$1
   echo $(stat -c%s "$1")
@@ -114,7 +116,7 @@ function indepth_search(){
   local working_directory="${1%/}"
   local depth=$2
   local files=$(ls -a "$1")
-
+  # jesli jendak wszystko potrzeba aby zrobic >= zamiast > to wtedy -ge
   for file in $files; do
     if [[ $depth -gt $MAX_DEPTH ]]; then
       return
@@ -129,6 +131,7 @@ function indepth_search(){
     else
       #echo "$working_directory/$file $(size "$working_directory/$file")"
       size_map[$(size "$working_directory/$file")]+="#####$working_directory/$file#####"
+      NUMBER_OF_PROCCESSED_FILES=$((NUMBER_OF_PROCCESSED_FILES+1))
     fi
   done
 }
@@ -140,6 +143,23 @@ function hash_search(){
     for file in $files_arr; do
         file_hash="$(hash $file)"
         hash_map[$file_hash]+="#####$file#####"
+    done
+  done
+}
+
+function cmp_search(){
+  for hash in "${!hash_map[@]}";do
+    local files_raw=${hash_map[$hash]}
+    local files_arr=($(split "$files_raw"))
+
+    if [[ ${#files_arr[@]} -eq 1 ]]; then
+      #echo Jestem niby jeden dlugosc ${hash_map[$hash]}
+      #echo $files_arr
+      continue
+    fi
+
+    for file in files_arr; do
+      if
     done
   done
 }
@@ -160,7 +180,14 @@ indepth_search "$DIRNAME" 0
 
 hash_search
 
+for key in "${!size_map[@]}"; do
+    value="${size_map[$key]}"
+    echo "Klucz: $key -> Wartość: $value"
+done
+
 for key in "${!hash_map[@]}"; do
     value="${hash_map[$key]}"
     echo "Klucz: $key -> Wartość: $value"
 done
+
+cmp_search
