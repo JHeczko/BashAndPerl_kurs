@@ -2,9 +2,18 @@
 # Jakub Heczko
 
 HARDLINKS_FLAG=1
+INTERACTIVE_FLAG=1
 MAX_DEPTH=0
 HASH_ALGO="md5sum"
+DIRNAME="./"
 
+# Statistics
+NUMBER_OF_PROCCESSED_FILES=0
+NUMBER_OF_FOUND_DUPLICATES=0
+NUMBER_OF_REPLACED_DUPLICATES=0
+
+declare -A size_map
+declare -A hash_map
 
 function check_for_help_apperance(){
   for arg in "$@"; do
@@ -79,6 +88,8 @@ while true; do
 
   esac
 done
+
+DIRNAME=$1
 }
 
 function hash(){
@@ -86,25 +97,56 @@ function hash(){
   echo -n "$text" | $HASH_ALGO | awk '{print $1}'
 }
 
+function split() {
+  local value="$1"
+  local separator="#####"
+  IFS="$separator" read -r -a result <<< "$value"
+  printf '%s\n' "${result[@]}"
+}
+
+function size(){
+  local file=$1
+  echo $(stat -c%s "$1")
+}
+
 function indepth_search(){
-  files=$@
-  files_depth_down=""
+  local working_directory="${1%/}"
+  local depth=$2
+  local files=$(ls -a "$1")
 
   for file in $files; do
+    if [[ $depth -gt $MAX_DEPTH ]]; then
+      return
+    fi
+
     if [[ $file == '.' || $file == '..' ]]; then
       continue
     fi
 
-    if [[ -d file ]]
-
-    echo $(len file)
+    if [[ -d $file ]]; then
+      indepth_search "$working_directory/$file" "$((depth+1))"
+    else
+      echo "$working_directory/$file $(size "$working_directory/$file")"
+      size_map[$(size "$working_directory/$file")]+="#####$working_directory/$file#####"
+    fi
   done
 }
 
+function hash_search(){
+  for key in "${}"
+}
+
 # =================================================
+
 
 check_for_help_apperance "$@"
 
 parse_args "$@"
 
-indepth_search $(ls -a)
+if [[ ! -d $DIRNAME ]]; then
+  echo "Given file is not directory"
+  exit 1
+fi
+
+indepth_search "$DIRNAME" 0
+
