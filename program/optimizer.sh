@@ -93,7 +93,8 @@ DIRNAME=$1
 }
 
 function hash(){
-  local text=$1
+  local dir=$1
+  local text=$(cat "$dir")
   echo -n "$text" | $HASH_ALGO | awk '{print $1}'
 }
 
@@ -126,14 +127,21 @@ function indepth_search(){
     if [[ -d $file ]]; then
       indepth_search "$working_directory/$file" "$((depth+1))"
     else
-      echo "$working_directory/$file $(size "$working_directory/$file")"
+      #echo "$working_directory/$file $(size "$working_directory/$file")"
       size_map[$(size "$working_directory/$file")]+="#####$working_directory/$file#####"
     fi
   done
 }
 
 function hash_search(){
-  for key in "${}"
+  for key in "${!size_map[@]}"; do
+    local files_raw=${size_map[$key]}
+    local files_arr=$(split $files_raw)
+    for file in $files_arr; do
+        file_hash="$(hash $file)"
+        hash_map[$file_hash]+="#####$file#####"
+    done
+  done
 }
 
 # =================================================
@@ -150,3 +158,9 @@ fi
 
 indepth_search "$DIRNAME" 0
 
+hash_search
+
+for key in "${!hash_map[@]}"; do
+    value="${hash_map[$key]}"
+    echo "Klucz: $key -> Wartość: $value"
+done
