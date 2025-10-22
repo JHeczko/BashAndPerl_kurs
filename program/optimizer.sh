@@ -132,7 +132,6 @@ function indepth_search(){
     if [[ -d $file ]]; then
       indepth_search "$file" "$((depth+1))"
     else
-      echo "$file $(size "$file")"
       size_map[$(size "$file")]+="$SEPARATOR$file$SEPARATOR"
       NUMBER_OF_PROCCESSED_FILES=$((NUMBER_OF_PROCCESSED_FILES+1))
     fi
@@ -162,15 +161,8 @@ function cmp_search(){
       continue
     fi
 
-    # tworzenie mapy do rekucji
-    for file in "${files_arr[@]}"; do
-      cmp_map["$file"]="#####"
-    done
+    keys=("${files_arr[@]}")
 
-    keys=("${!cmp_map[@]}")
-
-    echo "${keys[@]}"
-    echo "${files_arr[@]}"
     # redukcja
     for ((i=0; i<${#keys[@]}; i++)); do
       for ((j=i+1; j<${#keys[@]}; j++)); do
@@ -218,15 +210,15 @@ indepth_search "$DIRNAME" 0
 
 hash_search
 
-for key in "${!size_map[@]}"; do
-    value="${size_map[$key]}"
-    echo "Klucz: $key -> Wartość: $value"
-done
-
-for key in "${!hash_map[@]}"; do
-    value="${hash_map[$key]}"
-    echo "Klucz: $key -> Wartość: $value"
-done
+#for key in "${!size_map[@]}"; do
+#    value="${size_map[$key]}"
+#    echo "Klucz: $key -> Wartość: $value"
+#done
+#
+#for key in "${!hash_map[@]}"; do
+#    value="${hash_map[$key]}"
+#    echo "Klucz: $key -> Wartość: $value"
+#done
 
 cmp_search
 
