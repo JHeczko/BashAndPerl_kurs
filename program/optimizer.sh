@@ -175,11 +175,12 @@ function cmp_search(){
         file1="${keys[$i]}"
         file2="${keys[$j]}"
 
-        if cmp -s "$file1" "$file2"; then
-          echo "Identyczne pliki: $file1 $file2"
+        # trzeba sprawdzic po inodach czy wskazujemy na ten sam odcinek w pamieci czy razczej sa to rozne pliki, bo jesli rozne to jeden kasujemy i robimy do pierwszego hardlinka :D
+        inode1=$(stat -c '%d:%i' "$file1")
+        inode2=$(stat -c '%d:%i' "$file2")
 
-        else
-          echo "Pliki są różne: $file1 $file2"
+        if cmp -s "$file1" "$file2" && [[ "$inode1" != "$inode2" ]]; then
+          echo "Identyczne pliki: $file1 $file2"
         fi
       done
     done
@@ -213,8 +214,3 @@ for key in "${!hash_map[@]}"; do
 done
 
 cmp_search
-
-for key in "${!cmp_map[@]}"; do
-    value="${cmp_map[$key]}"
-    echo "Klucz: $key -> Wartość: $value"
-done
