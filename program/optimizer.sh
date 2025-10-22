@@ -169,6 +169,8 @@ function cmp_search(){
 
     keys=("${!cmp_map[@]}")
 
+    echo "${keys[@]}"
+    echo "${files_arr[@]}"
     # redukcja
     for ((i=0; i<${#keys[@]}; i++)); do
       for ((j=i+1; j<${#keys[@]}; j++)); do
@@ -181,10 +183,23 @@ function cmp_search(){
 
         if cmp -s "$file1" "$file2" && [[ "$inode1" != "$inode2" ]]; then
           echo "Identyczne pliki: $file1 $file2"
+          NUMBER_OF_FOUND_DUPLICATES=$((NUMBER_OF_FOUND_DUPLICATES+1))
+          rm "$file2"
+
+          if ln -f "$file1" "$file2" && [[ -f "$file2" ]]; then
+              echo -e "\t-Hardlink utworzony i plik istnieje"
+              NUMBER_OF_REPLACED_DUPLICATES=$((NUMBER_OF_REPLACED_DUPLICATES+1))
+          fi
         fi
       done
     done
   done
+}
+
+function print_stat(){
+  echo "Liczba przetworzonych plikow: $NUMBER_OF_PROCCESSED_FILES"
+  echo "Liczba znalezionych duplikatow: $NUMBER_OF_FOUND_DUPLICATES"
+  echo "Liczba zastapionych duplikatow: $NUMBER_OF_REPLACED_DUPLICATES"
 }
 
 # =================================================
@@ -214,3 +229,5 @@ for key in "${!hash_map[@]}"; do
 done
 
 cmp_search
+
+print_stat
