@@ -1,8 +1,8 @@
 #!/bin/bash
 # Jakub Heczko
 
-HARDLINKS_FLAG=1
-INTERACTIVE_FLAG=1
+HARDLINKS_FLAG=0
+INTERACTIVE_FLAG=0
 MAX_DEPTH=0
 HASH_ALGO="md5sum"
 DIRNAME="./"
@@ -28,71 +28,75 @@ function check_for_help_apperance(){
 }
 
 function parse_args(){
-ARGS=$(getopt -o "" -l "replace-with-hardlinks,max-depth:,hash-algo:,help" -- "$@")
-if [[ $? -ne 0 ]]; then
-  echo "[ERROR] Failed to parse arguments"
-  exit 1
-fi
+  ARGS=$(getopt -o "" -l "replace-with-hardlinks,max-depth:,hash-algo:,help,interactive" -- "$@" 2>/dev/null)
+  if [[ $? -ne 0 ]]; then
+    echo "[ERROR] Failed to parse arguments"
+    exit 1
+  fi
 
-eval set -- "$ARGS"
+  eval set -- "$ARGS"
 
-while true; do
-  case "$1" in
+  while true; do
+    case "$1" in
 
-    --replace-with-hardlinks)
+      --replace-with-hardlinks)
+        HARDLINKS_FLAG=1
+        shift
+        ;;
 
-      HARDLINKS_FLAG=0
-      shift
-      ;;
+
+      --interactive)
+        INTERACTIVE_FLAG=1
+        shift
+        ;;
+
+      --max-depth)
+        if [[ -z "$2" || "$2" == -* ]]; then
+          echo "[ERROR] --max-depth option require a posotive number of the recursion depth"
+          exit 1
+        fi
+
+        if [[ ! "$2" =~ [0-9]+ ]]; then
+          echo "[ERROR] Opcja musi byc integerem"
+          exit 1
+        fi
+
+        MAX_DEPTH=$2
+        shift 2
+        ;;
 
 
-    --max-depth)
-      if [[ -z "$2" || "$2" == -* ]]; then
-        echo "[ERROR] --max-depth option require a posotive number of the recursion depth"
+      --hash-algo)
+       if [[ -z "$2" || "$2" == -* ]]; then
+          echo "[ERROR] --hash-algo option require a name of algorithm"
+          exit 1
+        fi
+
+        if [[ "$2" != "md5sum" && "$2" != "sha1sum" && "$2" != "sha256sum" ]]; then
+          echo "[ERROR] No such hashing algorythm supported, please choose only from the following list: md5sum ,sha1sum ,sha256sum"
+          exit 1
+        fi
+
+        HASH_ALGO="$2"
+        shift 2
+        ;;
+
+
+      --)
+        shift
+        break
+        ;;
+
+
+      *)
+        echo "[ERROR] Nieznana opcja: $1"
         exit 1
-      fi
+        ;;
 
-      if [[ ! "$2" =~ [0-9]+ ]]; then
-        echo "[ERROR] Opcja musi byc integerem"
-        exit 1
-      fi
+    esac
+  done
 
-      MAX_DEPTH=$2
-      shift 2
-      ;;
-
-
-    --hash-algo)
-     if [[ -z "$2" || "$2" == -* ]]; then
-        echo "[ERROR] --hash-algo option require a name of algorithm"
-        exit 1
-      fi
-
-      if [[ "$2" != "md5sum" && "$2" != "sha1sum" && "$2" != "sha256sum" ]]; then
-        echo "[ERROR] No such hashing algorythm supported, please choose only from the following list: md5sum ,sha1sum ,sha256sum"
-        exit 1
-      fi
-
-      HASH_ALGO="$2"
-      shift 2
-      ;;
-
-
-    --)
-      shift
-      break
-      ;;
-
-
-    *)
-      echo "[ERROR] Nieznana opcja: $1"
-      exit 1
-      ;;
-
-  esac
-done
-
-DIRNAME=$1
+  DIRNAME=$1
 }
 
 function hash(){
@@ -150,6 +154,9 @@ function hash_search(){
 }
 
 function cmp_search(){
+  local tmp_file1=$(mktemp)
+  local tmp_file2=$(mktemp)
+
   for hash in "${!hash_map[@]}";do
     local files_raw=${hash_map[$hash]}
     local files_arr=($(split "$files_raw"))
@@ -174,18 +181,45 @@ function cmp_search(){
         inode2=$(stat -c '%d:%i' "$file2")
 
         if cmp -s "$file1" "$file2" && [[ "$inode1" != "$inode2" ]]; then
-          echo "Identyczne pliki: $file1 $file2"
+          cp "$file1" "$tmp_file1"
+          cp "$file2" "$tmp_file2"
+          #echo "Identyczne pliki z roznymi inodami: $file1 $file2"
           NUMBER_OF_FOUND_DUPLICATES=$((NUMBER_OF_FOUND_DUPLICATES+1))
-          rm "$file2"
 
-          if ln -f "$file1" "$file2" && [[ -f "$file2" ]]; then
-              echo -e "\t-Hardlink utworzony i plik istnieje"
-              NUMBER_OF_REPLACED_DUPLICATES=$((NUMBER_OF_REPLACED_DUPLICATES+1))
+
+          if [[ $INTERACTIVE_FLAG -eq 1 ]]; then
+              read -p "Czy chcesz utworzyć hardlink: $file2 -> $file1 ? [t/N] " reply
+              reply=${reply,,}  # zmiana na małe litery
+              if [[ "$reply" != "t" ]]; then
+                  echo "Pominięto $file2 -> $file1"
+                  continue  # pomiń tworzenie hardlinka
+              fi
+          fi
+
+          # Dobra maly opis co tutaj sie dzieje, najpierw usuwamy wczesniej skopiowany do pliku tymaczosego plik, natepnie robimy hardlinka do plik1, jesli hardlinka nie da sie zrobic, to wtedy zwracamy plik drugi na miejsce plik2, usuwamy plik1 nastepnie robimy hardlinka na pliku2.
+          if [[ $HARDLINKS_FLAG -eq 1 ]]; then
+            if rm "$file2";ln -f "$file1" "$file2" && [[ -f "$file2" ]]; then
+                #echo -e "\t-Hardlink utworzony i plik istnieje"
+                NUMBER_OF_REPLACED_DUPLICATES=$((NUMBER_OF_REPLACED_DUPLICATES+1))
+            elif  cp "$tmp_file2" "$file2";rm "$file1";ln -f "$file2" "$file1" && [[ -f "$file1" ]]; then
+                #echo -e "\t-Hardlink utworzony i plik istnieje"
+                NUMBER_OF_REPLACED_DUPLICATES=$((NUMBER_OF_REPLACED_DUPLICATES+1))
+            fi
+
+            if [[ -f "$file1" ]];then
+              cp "$tmp_file1" "$file1"
+            fi
+
+            if [[ -f "$file2" ]];then
+              cp "$tmp_file2" "$file2"
+            fi
+
           fi
         fi
       done
     done
   done
+  rm "$tmp_file1" "$tmp_file2"
 }
 
 function print_stat(){
