@@ -117,7 +117,8 @@ function size(){
 function indepth_search(){
   local working_directory="${1%/}"
   local depth=$2
-  local files=$(ls -a "$1")
+  local files=$(find "$working_directory" -mindepth 1 -maxdepth 1)
+
   # jesli jendak wszystko potrzeba aby zrobic >= zamiast > to wtedy -ge
   for file in $files; do
     if [[ $depth -gt $MAX_DEPTH ]]; then
@@ -129,10 +130,10 @@ function indepth_search(){
     fi
 
     if [[ -d $file ]]; then
-      indepth_search "$working_directory/$file" "$((depth+1))"
+      indepth_search "$file" "$((depth+1))"
     else
-      #echo "$working_directory/$file $(size "$working_directory/$file")"
-      size_map[$(size "$working_directory/$file")]+="$SEPARATOR$working_directory/$file$SEPARATOR"
+      echo "$file $(size "$file")"
+      size_map[$(size "$file")]+="$SEPARATOR$file$SEPARATOR"
       NUMBER_OF_PROCCESSED_FILES=$((NUMBER_OF_PROCCESSED_FILES+1))
     fi
   done
