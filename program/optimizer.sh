@@ -6,6 +6,7 @@ INTERACTIVE_FLAG=1
 MAX_DEPTH=0
 HASH_ALGO="md5sum"
 DIRNAME="./"
+SEPARATOR="#####"
 
 # Statistics
 NUMBER_OF_PROCCESSED_FILES=0
@@ -15,6 +16,7 @@ NUMBER_OF_REPLACED_DUPLICATES=0
 declare -A size_map
 declare -A hash_map
 declare -A cmp_map
+
 
 function check_for_help_apperance(){
   for arg in "$@"; do
@@ -101,7 +103,7 @@ function hash(){
 
 function split() {
   local value="$1"
-  local separator="#####"
+  local separator="$SEPARATOR"
   IFS="$separator" read -r -a result <<< "$value"
   printf '%s\n' "${result[@]}"
 }
@@ -130,7 +132,7 @@ function indepth_search(){
       indepth_search "$working_directory/$file" "$((depth+1))"
     else
       #echo "$working_directory/$file $(size "$working_directory/$file")"
-      size_map[$(size "$working_directory/$file")]+="#####$working_directory/$file#####"
+      size_map[$(size "$working_directory/$file")]+="$SEPARATOR$working_directory/$file$SEPARATOR"
       NUMBER_OF_PROCCESSED_FILES=$((NUMBER_OF_PROCCESSED_FILES+1))
     fi
   done
@@ -142,7 +144,7 @@ function hash_search(){
     local files_arr=$(split $files_raw)
     for file in $files_arr; do
         file_hash="$(hash $file)"
-        hash_map[$file_hash]+="#####$file#####"
+        hash_map[$file_hash]+="$SEPARATOR$file$SEPARATOR"
     done
   done
 }
@@ -152,14 +154,33 @@ function cmp_search(){
     local files_raw=${hash_map[$hash]}
     local files_arr=($(split "$files_raw"))
 
+
     if [[ ${#files_arr[@]} -eq 1 ]]; then
       #echo Jestem niby jeden dlugosc ${hash_map[$hash]}
       #echo $files_arr
       continue
     fi
 
-    for file in files_arr; do
-      if
+    # tworzenie mapy do rekucji
+    for file in "${files_arr[@]}"; do
+      cmp_map["$file"]="#####"
+    done
+
+    keys=("${!cmp_map[@]}")
+
+    # redukcja
+    for ((i=0; i<${#keys[@]}; i++)); do
+      for ((j=i+1; j<${#keys[@]}; j++)); do
+        file1="${keys[$i]}"
+        file2="${keys[$j]}"
+
+        if cmp -s "$file1" "$file2"; then
+          echo "Identyczne pliki: $file1 $file2"
+
+        else
+          echo "Pliki są różne: $file1 $file2"
+        fi
+      done
     done
   done
 }
@@ -191,3 +212,8 @@ for key in "${!hash_map[@]}"; do
 done
 
 cmp_search
+
+for key in "${!cmp_map[@]}"; do
+    value="${cmp_map[$key]}"
+    echo "Klucz: $key -> Wartość: $value"
+done
