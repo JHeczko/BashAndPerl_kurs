@@ -3,7 +3,7 @@
 
 HARDLINKS_FLAG=0
 INTERACTIVE_FLAG=0
-MAX_DEPTH=0
+MAX_DEPTH="no"
 HASH_ALGO="md5sum"
 DIRNAME="./"
 SEPARATOR="#####"
@@ -15,7 +15,6 @@ NUMBER_OF_REPLACED_DUPLICATES=0
 
 declare -A size_map
 declare -A hash_map
-declare -A cmp_map
 
 
 function check_for_help_apperance(){
@@ -61,7 +60,7 @@ function parse_args(){
           exit 1
         fi
 
-        MAX_DEPTH=$2
+        MAX_DEPTH=$($2+1)
         shift 2
         ;;
 
@@ -125,7 +124,7 @@ function indepth_search(){
 
   # jesli jendak wszystko potrzeba aby zrobic >= zamiast > to wtedy -ge
   for file in $files; do
-    if [[ $depth -gt $MAX_DEPTH ]]; then
+    if [[ $depth -gt $MAX_DEPTH && $MAX_DEPTH != "no" ]]; then
       return
     fi
 
@@ -135,7 +134,7 @@ function indepth_search(){
 
     if [[ -d $file ]]; then
       indepth_search "$file" "$((depth+1))"
-    else
+    elif [[ -f $file ]]; then
       size_map[$(size "$file")]+="$SEPARATOR$file$SEPARATOR"
       NUMBER_OF_PROCCESSED_FILES=$((NUMBER_OF_PROCCESSED_FILES+1))
     fi
@@ -154,8 +153,8 @@ function hash_search(){
 }
 
 function cmp_search(){
-  local tmp_file1=$(mktemp)
-  local tmp_file2=$(mktemp)
+  local tmp_file1=$(mktemp tmpXXXXXXXXX)
+  local tmp_file2=$(mktemp tmpXXXXXXXXX)
 
   for hash in "${!hash_map[@]}";do
     local files_raw=${hash_map[$hash]}
