@@ -100,7 +100,7 @@ function parse_args(){
 
 function hash(){
   local dir=$1
-  local text=$(cat "$dir")
+  local text=$(base64 -w0 "$dir")
   echo -n "$text" | $HASH_ALGO | awk '{print $1}'
 }
 
@@ -168,7 +168,7 @@ function length_search(){
     fi
 
     if [[ -f $file ]]; then
-      echo $file
+      #echo $file
       size_map[$(size "$file")]+="$SEPARATOR$file$SEPARATOR"
       NUMBER_OF_PROCCESSED_FILES=$((NUMBER_OF_PROCCESSED_FILES+1))
     fi
