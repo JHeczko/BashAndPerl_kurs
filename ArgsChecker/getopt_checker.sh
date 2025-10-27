@@ -7,7 +7,7 @@
 # checkes if argument -q is in the params
 #
 # Input Arguments:
-# - all program input parameters
+# - all Optimizer input parameters
 function check_for_q_apperance(){
   for arg in "$@"; do
     if [[ "$arg" == "-q" ]]; then
@@ -21,7 +21,7 @@ function check_for_q_apperance(){
 # checkes if argument -help is in the params
 #
 # Input Arguments:
-# - all program input parameters
+# - all Optimizer input parameters
 function check_for_help_apperance(){
   for arg in "$@"; do
     if [[ $arg == "--help" ]]; then
@@ -48,7 +48,7 @@ function print_rest_args(){
 }
 
 # print_main_args()
-# prints all program options sorted alphabeticly
+# prints all Optimizer options sorted alphabeticly
 #
 # Input Arguments:
 # - string with formatted option parameters (\n at the end of every option segment)
@@ -59,6 +59,11 @@ function print_main_args() {
   echo "$getopt_string_sorted"
 }
 # -=-==-=-=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-
+
+
+
+
+
 
 
 

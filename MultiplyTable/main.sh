@@ -79,7 +79,7 @@ print_rows(){
   done
 }
 
-# Main program
+# Main Optimizer
 parse_input_arguments "$@"
 
 longest_word=$((second_number*second_number))

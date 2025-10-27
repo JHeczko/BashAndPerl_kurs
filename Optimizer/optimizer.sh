@@ -117,7 +117,31 @@ function size(){
   echo $(stat -c%s "$1")
 }
 
-function indepth_search(){
+#function length_search(){
+#  local working_directory="${1%/}"
+#  local depth=$2
+#  local files=$(find "$working_directory" -mindepth 1 -maxdepth 1)
+#
+#  # jesli jendak wszystko potrzeba aby zrobic >= zamiast > to wtedy -ge
+#  for file in $files; do
+#    if [[ $depth -gt $MAX_DEPTH && $MAX_DEPTH != "no" ]]; then
+#      return
+#    fi
+#
+#    if [[ $file == '.' || $file == '..' ]]; then
+#      continue
+#    fi
+#
+#    if [[ -d $file ]]; then
+#      length_search "$file" "$((depth+1))"
+#    elif [[ -f $file ]]; then
+#      size_map[$(size "$file")]+="$SEPARATOR$file$SEPARATOR"
+#      NUMBER_OF_PROCCESSED_FILES=$((NUMBER_OF_PROCCESSED_FILES+1))
+#    fi
+#  done
+#}
+
+function length_search(){
   local working_directory="${1%/}"
   local depth=$2
   local files=$(find "$working_directory" -mindepth 1 -maxdepth 1)
@@ -133,13 +157,14 @@ function indepth_search(){
     fi
 
     if [[ -d $file ]]; then
-      indepth_search "$file" "$((depth+1))"
+      length_search "$file" "$((depth+1))"
     elif [[ -f $file ]]; then
       size_map[$(size "$file")]+="$SEPARATOR$file$SEPARATOR"
       NUMBER_OF_PROCCESSED_FILES=$((NUMBER_OF_PROCCESSED_FILES+1))
     fi
   done
 }
+
 
 function hash_search(){
   for key in "${!size_map[@]}"; do
@@ -239,7 +264,7 @@ if [[ ! -d $DIRNAME ]]; then
   exit 1
 fi
 
-indepth_search "$DIRNAME" 0
+length_search "$DIRNAME" 0
 
 hash_search
 

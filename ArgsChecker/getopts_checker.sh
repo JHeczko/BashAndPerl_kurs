@@ -8,7 +8,7 @@ optind=""
 # checkes if argument -q is in the params
 #
 # Input Arguments:
-# - all program input parameters
+# - all Optimizer input parameters
 function check_for_q_apperance(){
   for arg in "$@"; do
     if [[ "$arg" == "-q" ]]; then
@@ -20,10 +20,10 @@ function check_for_q_apperance(){
 
 
 # parse_args()
-# parses all the arguments of the program and then making whole string out of them
+# parses all the arguments of the Optimizer and then making whole string out of them
 #
 # Input Arguments:
-# - all program input parameters
+# - all Optimizer input parameters
 function parse_args(){
   # creating getops string
   while getopts ":abcdefghjklmnprstuvwxyzABCDEFGHJKLMNPRSTUVWXYZi:o:" arg; do
@@ -65,7 +65,7 @@ function parse_args(){
 }
 
 # print_main_args()
-# prints all program options sorted alphabeticly
+# prints all program options sorted alphabetically
 #
 # Input Arguments:
 # - string with formatted option parameters (\n at the end of every option segment)
