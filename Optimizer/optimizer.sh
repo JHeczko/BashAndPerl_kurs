@@ -15,7 +15,7 @@ NUMBER_OF_REPLACED_DUPLICATES=0
 
 declare -A size_map
 declare -A hash_map
-
+declare -A cmp_map
 
 function check_for_help_apperance(){
   for arg in "$@"; do
@@ -117,6 +117,17 @@ function size(){
   echo $(stat -c%s "$1")
 }
 
+function order_con() {
+    local str1="$1"
+    local str2="$2"
+
+    if [[ "$str1" < "$str2" ]]; then
+        echo "${str1}_${str2}"
+    else
+        echo "${str2}_${str1}"
+    fi
+}
+
 #function length_search(){
 #  local working_directory="${1%/}"
 #  local depth=$2
@@ -143,22 +154,21 @@ function size(){
 
 function length_search(){
   local working_directory="${1%/}"
-  local depth=$2
-  local files=$(find "$working_directory" -mindepth 1 -maxdepth 1)
+  local files
+  if [[ "$MAX_DEPTH" == "no" ]]; then
+      files=$(find "$working_directory" -mindepth 1)
+  elif [[ "$MAX_DEPTH" =~ ^[0-9]+$ ]]; then
+      files=$(find "$working_directory" -mindepth 1 -maxdepth $MAX_DEPTH)
+  fi
 
   # jesli jendak wszystko potrzeba aby zrobic >= zamiast > to wtedy -ge
   for file in $files; do
-    if [[ $depth -gt $MAX_DEPTH && $MAX_DEPTH != "no" ]]; then
-      return
-    fi
-
     if [[ $file == '.' || $file == '..' ]]; then
       continue
     fi
 
-    if [[ -d $file ]]; then
-      length_search "$file" "$((depth+1))"
-    elif [[ -f $file ]]; then
+    if [[ -f $file ]]; then
+      echo $file
       size_map[$(size "$file")]+="$SEPARATOR$file$SEPARATOR"
       NUMBER_OF_PROCCESSED_FILES=$((NUMBER_OF_PROCCESSED_FILES+1))
     fi
@@ -178,8 +188,12 @@ function hash_search(){
 }
 
 function cmp_search(){
-  local tmp_file1=$(mktemp tmpXXXXXXXXX)
-  local tmp_file2=$(mktemp tmpXXXXXXXXX)
+  local tmp_file1
+  local tmp_file2
+  if [[ $HARDLINKS_FLAG -eq 1 ]]; then
+    tmp_file1=$(mktemp tmpXXXXXXXXX)
+    tmp_file2=$(mktemp tmpXXXXXXXXX)
+  fi
 
   for hash in "${!hash_map[@]}";do
     local files_raw=${hash_map[$hash]}
@@ -205,10 +219,17 @@ function cmp_search(){
         inode2=$(stat -c '%d:%i' "$file2")
 
         if cmp -s "$file1" "$file2" && [[ "$inode1" != "$inode2" ]]; then
-          cp "$file1" "$tmp_file1"
-          cp "$file2" "$tmp_file2"
+          if [[ $HARDLINKS_FLAG -eq 1 ]]; then
+            cp "$file1" "$tmp_file1"
+            cp "$file2" "$tmp_file2"
+          fi
           #echo "Identyczne pliki z roznymi inodami: $file1 $file2"
-          NUMBER_OF_FOUND_DUPLICATES=$((NUMBER_OF_FOUND_DUPLICATES+1))
+          if [[ ! -v ${cmp_map[$(order_con "$file1" "$file2")]} ]]; then
+            #echo "Mamy plik $(order_con "$file1" "$file2")"
+            cmp_map[$(order_con "$file1" "$file2")]="git"
+            NUMBER_OF_FOUND_DUPLICATES=$((NUMBER_OF_FOUND_DUPLICATES+1))
+          fi
+          #NUMBER_OF_FOUND_DUPLICATES=$((NUMBER_OF_FOUND_DUPLICATES+1))
 
 
           if [[ $INTERACTIVE_FLAG -eq 1 ]]; then
@@ -243,7 +264,9 @@ function cmp_search(){
       done
     done
   done
-  rm "$tmp_file1" "$tmp_file2"
+  if [[ $HARDLINKS_FLAG -eq 1 ]]; then
+    rm "$tmp_file1" "$tmp_file2"
+  fi
 }
 
 function print_stat(){
@@ -264,7 +287,7 @@ if [[ ! -d $DIRNAME ]]; then
   exit 1
 fi
 
-length_search "$DIRNAME" 0
+length_search "$DIRNAME"
 
 hash_search
 
