@@ -984,5 +984,8 @@ http-client.private.env.json
 
 
 # =-=-=-=-=-=-=-=-=-= Custom User Section =-=-=-=-=-=-=-=-=-=
-test*
+test*/
+DIR01/
+DIR02/
+img_test/
 # =-=-=-=-=-=-=-=-=-= END Custom User Section =-=-=-=-=-=-=-=-=-=

@@ -190,7 +190,7 @@ function length_search(){
           size_map[$(size "$file")]+="$SEPARATOR$file$SEPARATOR"
           NUMBER_OF_PROCCESSED_FILES=$((NUMBER_OF_PROCCESSED_FILES+1))
         fi
-      done < <(find "$working_directory" -mindepth 1 -type f -print0)
+      done < <(find "$working_directory" -mindepth 0 -type f -print0)
 
   elif [[ "$MAX_DEPTH" =~ ^[0-9]+$ ]]; then
       while IFS= read -r -d '' file; do
@@ -199,7 +199,7 @@ function length_search(){
           size_map[$(size "$file")]+="$SEPARATOR$file$SEPARATOR"
           NUMBER_OF_PROCCESSED_FILES=$((NUMBER_OF_PROCCESSED_FILES+1))
         fi
-      done < <(find "$working_directory" -type f -mindepth 1 -maxdepth $MAX_DEPTH -print0)
+      done < <(find "$working_directory" -mindepth 0 -maxdepth $MAX_DEPTH -type f -print0)
   fi
 
   #echo "Wychodze z length_search"
@@ -298,80 +298,6 @@ function cmp_search(){
             if [[ -f "$file2" ]];then
               cp "$tmp_file2" "$file2"
             fi
-          fi
-        fi
-      done
-    done
-  done
-
-  if [[ $HARDLINKS_FLAG -eq 1 ]]; then
-    rm "$tmp_file1" "$tmp_file2"
-  fi
-}
-
-
-function cmp_search2() {
-  local tmp_file1
-  local tmp_file2
-  if [[ $HARDLINKS_FLAG -eq 1 ]]; then
-    tmp_file1=$(mktemp tmpXXXXXXXXX)
-    tmp_file2=$(mktemp tmpXXXXXXXXX)
-  fi
-
-  for hash in "${!hash_map[@]}"; do
-    local files_raw=${hash_map[$hash]}
-    # split już poprawiony – zakładamy, że nie daje pustych
-    local files_arr=($(split "$files_raw"))
-
-    # jeśli tylko jeden plik w grupie, pomijamy
-    if [[ ${#files_arr[@]} -le 1 ]]; then
-      continue
-    fi
-
-    # W tej grupie może być wiele duplikatów
-    # Sprawdzamy wszystkie pliki w grupie względem siebie
-    for ((i=0; i<${#files_arr[@]}; i++)); do
-      file1="${files_arr[$i]}"
-      for ((j=i+1; j<${#files_arr[@]}; j++)); do
-        file2="${files_arr[$j]}"
-
-        inode1=$(stat -c '%d:%i' "$file1")
-        inode2=$(stat -c '%d:%i' "$file2")
-
-        # sprawdzenie zawartości
-        if cmp -s "$file1" "$file2" && [[ "$inode1" != "$inode2" ]]; then
-          # kopiowanie tymczasowe jeśli hardlink
-          if [[ $HARDLINKS_FLAG -eq 1 ]]; then
-            cp "$file1" "$tmp_file1"
-            cp "$file2" "$tmp_file2"
-          fi
-
-          # zliczanie duplikatów dla KAŻDEGO wystąpienia
-          NUMBER_OF_FOUND_DUPLICATES=$((NUMBER_OF_FOUND_DUPLICATES+1))
-
-          # unikanie powtórek przy hardlinkach
-          if [[ ! -v cmp_map[$(order_con "$file1" "$file2")] ]]; then
-            cmp_map[$(order_con "$file1" "$file2")]=1
-          fi
-
-          if [[ $INTERACTIVE_FLAG -eq 1 ]]; then
-            read -p "Czy chcesz utworzyć hardlink: $file2 -> $file1 ? [t/N] " reply
-            reply=${reply,,}
-            if [[ "$reply" != "t" ]]; then
-              echo "Pominięto $file2 -> $file1"
-              continue
-            fi
-          fi
-
-          if [[ $HARDLINKS_FLAG -eq 1 ]]; then
-            if rm "$file2"; ln -f "$file1" "$file2" && [[ -f "$file2" ]]; then
-              NUMBER_OF_REPLACED_DUPLICATES=$((NUMBER_OF_REPLACED_DUPLICATES+1))
-            elif cp "$tmp_file2" "$file2"; rm "$file1"; ln -f "$file2" "$file1" && [[ -f "$file1" ]]; then
-              NUMBER_OF_REPLACED_DUPLICATES=$((NUMBER_OF_REPLACED_DUPLICATES+1))
-            fi
-
-            [[ -f "$file1" ]] && cp "$tmp_file1" "$file1"
-            [[ -f "$file2" ]] && cp "$tmp_file2" "$file2"
           fi
         fi
       done
