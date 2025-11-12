@@ -30,7 +30,7 @@ done
 trap cleanup SIGINT SIGTERM
 
 # Sprawdź czy port jest wolny
-if lsof -iTCP:"$PORT" -sTCP:LISTEN -Pn >/dev/null 2>&1; then
+if lsof -i TCP:"$PORT" -s TCP:LISTEN -Pn >/dev/null 2>&1; then
   echo "Port $PORT is unavailable"
   exit 1
 fi
