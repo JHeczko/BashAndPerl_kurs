@@ -225,10 +225,10 @@ function cmp_search(){
     tmp_file2=$(mktemp tmpXXXXXXXXX)
   fi
 
+  # dla kazdej podgrupy hashy twozymy kopie
   for hash in "${!hash_map[@]}";do
     local files_raw=${hash_map[$hash]}
 
-    # ✅ zamiast "local files_arr=($(split ...))" — użyj mapfile, które obsługuje spacje
     local files_arr=()
     while IFS= read -r line; do
       [[ -n "$line" ]] && files_arr+=("$line")
@@ -240,26 +240,40 @@ function cmp_search(){
 
     keys=("${files_arr[@]}")
 
-    # redukcja
     for ((i=0; i<${#keys[@]}; i++)); do
+      file1="${keys[$i]}"
+
+      # jesli brak pliku w cmp_map wpisz go tam razem z jego id
+      if [[ ! -v ${cmp_map["$file1"]} ]]; then
+        cmp_map["$file1"]="$i" 
+      fi
+
       for ((j=i+1; j<${#keys[@]}; j++)); do
-        file1="${keys[$i]}"
         file2="${keys[$j]}"
+
+        if [[ -v ${cmp_map["$file1"]} && -v ${cmp_map["$file2"]} ]]; then
+          continue
+        fi
 
         inode1=$(stat -c '%d:%i' "$file1")
         inode2=$(stat -c '%d:%i' "$file2")
 
         if cmp -s "$file1" "$file2" && [[ "$inode1" != "$inode2" ]]; then
+          
+
+          # logika porownania plikow
+          if [[ ! -v ${cmp_map["$file2"]} ]]; then
+            cmp_map["$file2"]="${cmp_map["$file1"]}"
+            NUMBER_OF_FOUND_DUPLICATES=$((NUMBER_OF_FOUND_DUPLICATES+1))
+          fi
+
+          # zabezpieczenie sie przed utrata plikow xd
           if [[ $HARDLINKS_FLAG -eq 1 ]]; then
             cp "$file1" "$tmp_file1"
             cp "$file2" "$tmp_file2"
           fi
 
-          if [[ ! -v ${cmp_map[$(order_con "$file1" "$file2")]} ]]; then
-            cmp_map[$(order_con "$file1" "$file2")]="git"
-            NUMBER_OF_FOUND_DUPLICATES=$((NUMBER_OF_FOUND_DUPLICATES+1))
-          fi
-
+          # obsluga interakcji
           if [[ $INTERACTIVE_FLAG -eq 1 ]]; then
               read -p "Czy chcesz utworzyć hardlink: $file2 -> $file1 ? [t/N] " reply
               reply=${reply,,}
@@ -269,6 +283,7 @@ function cmp_search(){
               fi
           fi
 
+          # zastepowanie hardlinkami plikow
           if [[ $HARDLINKS_FLAG -eq 1 ]]; then
             if rm "$file2";ln -f "$file1" "$file2" && [[ -f "$file2" ]]; then
                 NUMBER_OF_REPLACED_DUPLICATES=$((NUMBER_OF_REPLACED_DUPLICATES+1))
@@ -388,13 +403,14 @@ if [[ ! -d $DIRNAME ]]; then
 fi
 
 length_search "$DIRNAME"
-
+echo "====== Step 1/3 ======"
 # for key in "${!size_map[@]}"; do
 #    value="${size_map[$key]}"
 #    echo "Klucz: $key -> Wartość: $value"
 # done
 
 hash_search
+echo "====== Step 2/3 ======"
 
 # for key in "${!hash_map[@]}"; do
 #    value="${hash_map[$key]}"
@@ -402,5 +418,6 @@ hash_search
 # done
 
 cmp_search
+echo "====== Step 3/3 ======"
 
 print_stat
