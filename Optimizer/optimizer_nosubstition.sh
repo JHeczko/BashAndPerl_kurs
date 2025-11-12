@@ -17,11 +17,6 @@ declare -A size_map
 declare -A hash_map
 declare -A cmp_map
 
-# Funkcja: check_for_help_apperance
-# Opis: Sprawdza, czy w przekazanych argumentach znajduje się --help. 
-#       Jeśli tak, drukuje pomoc i kończy działanie programu (exit 0).
-# Wejście: lista argumentów (positional parameters)
-# Wyjście: brak bezpośredniego zwrotu; może zakończyć skrypt (exit 0)
 function check_for_help_apperance(){
   for arg in "$@"; do
     if [[ $arg == "--help" ]]; then
@@ -31,11 +26,6 @@ function check_for_help_apperance(){
   done
 }
 
-# Funkcja: parse_args
-# Opis: Parsuje argumenty wywołania skryptu i ustawia globalne flagi/zmienne:
-#       HARDLINKS_FLAG, INTERACTIVE_FLAG, MAX_DEPTH, HASH_ALGO, DIRNAME.
-# Wejście: argumenty wywołania skryptu
-# Wyjście: modyfikuje zmienne globalne; może zakończyć skrypt przy błędzie (exit 1)
 function parse_args(){
   ARGS=$(getopt -o "" -l "replace-with-hardlinks,max-depth:,hash-algo:,help,interactive" -- "$@" 2>/dev/null)
   if [[ $? -ne 0 ]]; then
@@ -108,21 +98,12 @@ function parse_args(){
   DIRNAME=$1
 }
 
-# Funkcja: hash
-# Opis: Oblicza skrót pliku używając zdefiniowanego programu HASH_ALGO.
-#       Najpierw koduje zawartość pliku base64 (bez przełamań linii), następnie przekazuje do programu haszującego.
-# Wejście: ścieżka do pliku
-# Wyjście: wypisuje hash na stdout (bez nowej linii końcowej dodatkowej)
 function hash(){
   local dir="$1"
   local text=$(base64 -w0 "$dir")
   echo -n "$text" | $HASH_ALGO | awk '{print $1}'
 }
 
-# Funkcja: split
-# Opis: Dzieli string zawierający elementy rozdzielone SEPARATOR na linie i wypisuje każdy element.
-# Wejście: wartość-string do rozbicia
-# Wyjście: wypisuje każdy element na nowej linii (stdout)
 function split() {
   local value="$1"
   local separator="$SEPARATOR"
@@ -133,20 +114,11 @@ function split() {
   done
 }
 
-# Funkcja: size
-# Opis: Zwraca rozmiar pliku w bajtach.
-# Wejście: ścieżka do pliku
-# Wyjście: wypisuje liczbę bajtów na stdout
 function size(){
   local file=$1
   echo "$(stat -c%s "$1")"
 }
 
-# Funkcja: order_con
-# Opis: Porównuje dwa ciągi i zwraca je połączone w ustalonej kolejności (alfabetycznie), 
-#       użyteczne do ujednolicania par/kluczy.
-# Wejście: dwa ciągi (str1, str2)
-# Wyjście: wypisuje wynikowy string "mniejszy_wiekszy"
 function order_con() {
     local str1="$1"
     local str2="$2"
@@ -158,58 +130,52 @@ function order_con() {
     fi
 }
 
-# Funkcja: length_search
-# Opis: Przegląda katalog rekurencyjnie (z uwzględnieniem MAX_DEPTH) i grupuje pliki według rozmiaru.
-#       Aktualizuje size_map (mapa: rozmiar -> lista plików) oraz NUMBER_OF_PROCCESSED_FILES.
-# Wejście: katalog do przeszukania
-# Wyjście: modyfikuje globalne size_map i NUMBER_OF_PROCCESSED_FILES
 function length_search(){
   local working_directory="${1%/}"
+  local tempfile
+  tempfile=$(mktemp tmpXXXXXXXXX)
   
   # Używamy -print0 aby poprawnie obsłużyć pliki z białymi znakami
   if [[ "$MAX_DEPTH" == "no" ]]; then
+      find "$working_directory" -mindepth 0 -type f -print0 > "$tempfile"
       while IFS= read -r -d '' file; do
         #echo "$file";
         if [[ -f "$file" ]]; then
           size_map[$(size "$file")]+="$SEPARATOR$file$SEPARATOR"
           NUMBER_OF_PROCCESSED_FILES=$((NUMBER_OF_PROCCESSED_FILES+1))
         fi
-      done < <(find "$working_directory" -mindepth 0 -type f -print0)
+      done < "$tempfile"
 
   elif [[ "$MAX_DEPTH" =~ ^[0-9]+$ ]]; then
+      find "$working_directory" -mindepth 0 -maxdepth $MAX_DEPTH -type f -print0 > "$tempfile"
       while IFS= read -r -d '' file; do
         #echo "$file";
         if [[ -f "$file" ]]; then
           size_map[$(size "$file")]+="$SEPARATOR$file$SEPARATOR"
           NUMBER_OF_PROCCESSED_FILES=$((NUMBER_OF_PROCCESSED_FILES+1))
         fi
-      done < <(find "$working_directory" -mindepth 0 -maxdepth $MAX_DEPTH -type f -print0)
+      done < "$tempfile"
   fi
-
+  
+  rm "$tempfile"
   #echo "Wychodze z length_search"
 }
 
-# Funkcja: hash_search
-# Opis: Dla każdej grupy plików o tym samym rozmiarze oblicza hash i grupuje pliki według tego hasha.
-# Wejście: korzysta z globalnego size_map
-# Wyjście: wypełnia globalne hash_map (hash -> lista plików)
 function hash_search() {
   for key in "${!size_map[@]}"; do
     local files_raw=${size_map[$key]}
+    local tempfile
+    tempfile=$(mktemp tmpXXXXXXXXX)
+    split "$files_raw" > "$tempfile"
     while IFS= read -r file; do
       #echo "Przetwarzam: $file"
       file_hash="$(hash "$file")"
       hash_map[$file_hash]+="$SEPARATOR$file$SEPARATOR"
-    done < <(split "$files_raw")
+    done < "$tempfile"
+    rm "$tempfile"
   done
 }
 
-# Funkcja: cmp_search
-# Opis: Porównuje pliki o tym samym hashu bajt-po-bajcie (cmp -s). 
-#       Jeśli pliki są identyczne i mają różne inode'y, opcjonalnie zastępuje duplikaty hardlinkami
-#       lub pyta użytkownika w trybie interaktywnym. Aktualizuje statystyki.
-# Wejście: korzysta z globalnych hash_map, flag (HARDLINKS_FLAG, INTERACTIVE_FLAG)
-# Wyjście: modyfikuje cmp_map oraz statystyki NUMBER_OF_FOUND_DUPLICATES i NUMBER_OF_REPLACED_DUPLICATES
 function cmp_search(){
   local tmp_file1
   local tmp_file2
@@ -223,9 +189,13 @@ function cmp_search(){
     local files_raw=${hash_map[$hash]}
 
     local files_arr=()
+    local tempfile
+    tempfile=$(mktemp tmpXXXXXXXXX)
+    split "$files_raw" > "$tempfile"
     while IFS= read -r line; do
       [[ -n "$line" ]] && files_arr+=("$line")
-    done < <(split "$files_raw")
+    done < "$tempfile"
+    rm "$tempfile"
 
     if [[ ${#files_arr[@]} -eq 1 ]]; then
       continue
@@ -302,10 +272,6 @@ function cmp_search(){
   fi
 }
 
-# Funkcja: print_stat
-# Opis: Wypisuje podsumowanie statystyk o wykonaniu skryptu.
-# Wejście: brak (korzysta z globalnych zmiennych statystyk)
-# Wyjście: wypisuje liczby na stdout
 function print_stat(){
   echo "Liczba przetworzonych plikow: $NUMBER_OF_PROCCESSED_FILES"
   echo "Liczba znalezionych duplikatow: $NUMBER_OF_FOUND_DUPLICATES"
@@ -340,6 +306,6 @@ hash_search
 # done
 
 cmp_search
-echo "====== Step 3/3 ======"
+#echo "====== Step 3/3 ======"
 
 print_stat
