@@ -1,31 +1,28 @@
 #!/bin/bash
-# Jakub Heczko
 
-
-HOST="localhost"
 PORT=6789
-
-CONFIG_FILE="$HOME/.config/server.conf"
-[[ -f "$CONFIG_FILE" ]] && PORT=$(cat "$CONFIG_FILE")
-
-if [[ -n "$2" ]]; then
-  PORT="$2"
+if [[ -f "$HOME/.config/server.conf" ]]; then
+  PORT=$(<"$HOME/.config/server.conf")
 fi
 
-send() {
-  echo "$1" | nc "$HOST" "$PORT"
+send_query() {
+  echo "$1" | socat - TCP:localhost:$PORT
 }
 
 case "$1" in
   test1)
-    send "?"
-    send "INC" >/dev/null
-    send "INC" >/dev/null
-    send "?"
-    send "INC" >/dev/null
-    send "?"
+    send_query "?"
+    send_query "INC"
+    send_query "INC"
+    send_query "?"
+    send_query "INC"
+    send_query "?"
     ;;
   *)
-    echo "Usage: $0 test1 [port]"
+    if [[ -n "$1" ]]; then
+      send_query "$1"
+    else
+      echo "Użycie: $0 <komenda> lub test1"
+    fi
     ;;
 esac
