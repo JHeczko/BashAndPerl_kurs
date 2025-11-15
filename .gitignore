@@ -988,6 +988,7 @@ test*/
 DIR01/
 DIR02/
 img_test/
+*.log
 *.out
 .handler.sh
 counter.txt

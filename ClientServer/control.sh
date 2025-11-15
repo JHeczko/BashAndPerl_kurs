@@ -54,7 +54,7 @@ start_server() {
 
   # Uruchom w nowej sesji, zapisz pid procesu sesji (setsid zwraca PID child)
   # używamy setsid żeby móc killować grupę później
-  echo "Serwer cisnie na porcie: $port"
+  #echo "Serwer cisnie na porcie: $port"
   nohup setsid bash "$SERVER_PATH" -p "$port" >/dev/null 2>&1 &
   local pid=$!
   echo "$pid" > "$PID_FILE"

@@ -4,7 +4,7 @@
 PORT=6789
 COUNTER_FILE="$(dirname "$0")/counter.txt"
 PID_FILE="$(dirname "$0")/server.pid"
-LOGS="$(dirname "$0")/server.out"
+LOGS="$(dirname "$0")/server.log"
 HANDLER_SCRIPT="$(dirname "$0")/handler.sh"
 
 
