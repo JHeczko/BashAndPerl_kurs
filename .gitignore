@@ -992,4 +992,5 @@ img_test/
 *.out
 .handler.sh
 counter.txt
+.vstags
 # =-=-=-=-=-=-=-=-=-= END Custom User Section =-=-=-=-=-=-=-=-=-=
