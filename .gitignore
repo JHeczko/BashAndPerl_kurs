@@ -993,4 +993,7 @@ img_test/
 .handler.sh
 counter.txt
 .vstags
+matrix1.txt
+matrix2.txt
+matrixOut.txt
 # =-=-=-=-=-=-=-=-=-= END Custom User Section =-=-=-=-=-=-=-=-=-=

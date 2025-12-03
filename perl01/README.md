@@ -24,8 +24,7 @@ Twoim zadaniem jest napisanie programu w języku Perl, który wykonuje następuj
 3. Po zakończeniu wczytywania danych, program powinien posortować klucze (nazwy zwierząt) alfabetycznie.
 4. Na końcu program powinien wypisać w konsoli liczbę wystąpień każdego zwierzęcia, w formacie: nazwa zwierzęcia, spacja, liczba wystąpień.
 
-Przykładowe dane wejściowe:
-
+**Przykładowe dane wejściowe**:
 ```
 kot
 pies
@@ -48,3 +47,35 @@ pies 2
 - Do posortowania kluczy tablicy asocjacyjnej użyj funkcji sort.
 - Do odczytu danych z wejścia standardowego, użyj funkcji i zapisz dane do zmiennej.
 - Zaimplementuj rozwiązanie z wykorzystaniem pętli i instrukcji warunkowych, które pomogą w zliczaniu zwierząt.
+
+
+# Problem 03: Mnożenie macierzy
+Napisz program, który wykonuje mnożenie macierzy. Macierze powinny być odczytane z dwóch plików wejściowych podanych jako argumenty wiersza poleceń, a wynik powinien zostać zapisany do pliku wyjściowego o nazwie odpowiadającej trzeciemu argumentowi. Zakładamy, że macierze mają odpowiednie wymiary, tzn. liczba kolumn pierwszej macierzy jest równa liczbie wierszy drugiej macierzy. Format wyjściowy dla każdego elementu wynikowej macierzy to `%8.3f`.
+
+Program powinien wykonać następujące kroki:
+
+1. Wczytać dwie macierze z plików wejściowych (argumenty wiersza poleceń: `$ARGV[0]` i `$ARGV[1]`).
+2. Przeprowadzić mnożenie macierzy.
+3. Zapisz wynik mnożenia do pliku wyjściowego (argument wiersza poleceń: `$ARGV[2]`).
+4. Wynik macierzy wyświetlić w formacie: `%8.3f` dla każdego elementu.
+
+## Przykład
+- **Wejście**:
+    ```
+    # Plik 1 (macierz A):
+    1 2 3
+    4 5 6
+    7 8 9
+
+    # Plik 2 (macierz B):
+    9 8 7
+    6 5 4
+    3 2 1
+    ```
+
+- **Wynik**:
+  ```
+  30.000   24.000   18.000 
+  84.000   69.000   54.000 
+  138.000  114.000   90.000
+  ```
