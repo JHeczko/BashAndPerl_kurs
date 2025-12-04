@@ -44,8 +44,8 @@ sub multiply_matrices {
     my $m2 = @B;                     # liczba wierszy B
     my $k = @{$B[0]};                # liczba kolumn B
 
-    print "A: $n x $m\n";
-    print "B: $m2 x $k\n";
+    # print "A: $n x $m\n";
+    # print "B: $m2 x $k\n";
 
 
     die "Niepoprawne rozmiary macierzy do mnożenia\n" if $m != $m2;
