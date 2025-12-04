@@ -88,14 +88,14 @@ my @matrix2 = @$matrix_ref2;
 my $matrix_ref_out = multiply_matrices(\@matrix1, \@matrix2);
 my @matrix_out = @$matrix_ref_out; 
 
-open(my $matrix_file_out, ">", $macierz_sciezka_out);
+open(my $matrix_file_out, ">", $macierz_sciezka_out) or die "Cos sie nie dziala";
 
 foreach my $row (@matrix_out) {
     foreach my $val (@$row) {
-        printf("%8.3f", $val);
+        #printf("%8.3f", $val);
         printf($matrix_file_out "%8.3f", $val);
     }
-    print("\n");
+    #print("\n");
     print($matrix_file_out "\n");
 }
 

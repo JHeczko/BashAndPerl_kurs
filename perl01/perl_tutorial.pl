@@ -26,7 +26,7 @@ print scalar @zwierzeta, "\n";
 
 # 9
 foreach my $zwierze (@zwierzeta){
-    print "$zwierze \n";
+    print "$zwierze\n";
 }
 
 # 10
@@ -40,9 +40,7 @@ for my $i (0..$#zwierzeta){
 # }
 
 # 11
-my @zakres = (2..4);
-
-for my $i ((2..4)){
+for my $i (1..3){
     print "$zwierzeta[$i]\n";
 }
 
