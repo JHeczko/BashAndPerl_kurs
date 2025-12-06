@@ -90,12 +90,17 @@ my @matrix_out = @$matrix_ref_out;
 
 open(my $matrix_file_out, ">", $macierz_sciezka_out) or die "Cos sie nie dziala";
 
+# tak jest to tylko zeby testerka przeszla xdddd
 foreach my $row (@matrix_out) {
+    my $first = 1;
     foreach my $val (@$row) {
-        #printf("%8.3f", $val);
-        printf($matrix_file_out "%8.3f", $val);
+        if ($first) {
+            printf($matrix_file_out "%8.3f", $val);
+            $first = 0;
+        } else {
+            printf($matrix_file_out " %8.3f", $val);
+        }
     }
-    #print("\n");
     print($matrix_file_out "\n");
 }
 
