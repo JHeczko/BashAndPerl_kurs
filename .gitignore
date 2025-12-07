@@ -985,14 +985,21 @@ http-client.private.env.json
 
 # =-=-=-=-=-=-=-=-=-= Custom User Section =-=-=-=-=-=-=-=-=-=
 test*/
+test.*
+*.log
+*.out
+.vstags
+
+.handler.sh
+counter.txt
+
 DIR01/
 DIR02/
 img_test/
-*.log
-*.out
-.handler.sh
-counter.txt
-.vstags
+
+enc_pan.txt
+enc_potop.txt
+
 matrix1.txt
 matrix2.txt
 matrixOut.txt

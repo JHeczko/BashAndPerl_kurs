@@ -118,7 +118,16 @@ if ($opt_p) {
 
     my $name = defined $filename ? $filename : "-";
 
-    printf "%7d", shift @out if @out;
-    printf " %7d", $_ for @out;
+    my $width = 0;
+    for my $v (@out) {
+        my $len = length($v);
+        $width = $len if $len > $width;
+    }
+
+
+    if (@out) {
+        printf "%*d", $width, shift @out;
+        printf " %*d", $width, $_ for @out;
+    }
     printf " %s\n", $name;
 }

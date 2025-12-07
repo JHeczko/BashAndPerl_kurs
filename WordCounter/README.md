@@ -1,8 +1,4 @@
-# Problem PERL02
-
-W ramach tego problemu piszemy 2 programy: łamacz haseł i wc. Wysyłamy jako zzipowane pliki wc.pl i haslo.pl
-
-## Wc
+# Wc
 
 Piszemy wariany programu "wc". Po wywołaniu
 
