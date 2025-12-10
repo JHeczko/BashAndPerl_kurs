@@ -21,7 +21,6 @@ use Data::Dumper;
 print Dumper($sheet);
 ```
 
----
 
 ## Rozmaite hinty
 
