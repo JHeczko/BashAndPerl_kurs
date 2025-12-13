@@ -993,6 +993,8 @@ test.*
 *.csv
 *.db
 
+.vstags
+
 .handler.sh
 counter.txt
 
