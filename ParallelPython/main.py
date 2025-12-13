@@ -5,8 +5,7 @@ import sys
 from multiprocessing import Pool, cpu_count
 import threading
 
-print(f"GIL: {sys._is_gil_enabled()}")
-
+counter = 0
 
 def measure_time(f):
     def wrap(*args, **kwargs):
@@ -14,10 +13,12 @@ def measure_time(f):
         result = f(*args, **kwargs)
         end = time.perf_counter()
         elapsed = end - start
-        print(f"[TIME: {f.__name__}] {elapsed:.4f}s")
+        if (f.__name__ == "thread_count_records"):
+            print(f"[TIME: {f.__name__} {"synchronized" if kwargs["synchronized"] else "not synchronized"}] {elapsed:.4f}s")
+        else:
+            print(f"[TIME: {f.__name__}] {elapsed:.4f}s")
         return result
     return wrap
-
 
 def generate_data(n, text_len=100):
     import random, string
@@ -29,6 +30,9 @@ def generate_data(n, text_len=100):
     return data
 
 def count_records(records: list[dict], results_in=None, lock: threading.Lock | None = None):
+    global counter
+
+
     if results_in is None:
         results = []
     else:
@@ -52,10 +56,20 @@ def count_records(records: list[dict], results_in=None, lock: threading.Lock | N
             lock.acquire()
             try:
                 results.append(item)
+
+                tmp = counter      # 1. wczytaj
+                tmp += 1           # 2. policz
+                counter = tmp      # 3. zapisz (3 operacje, zero atomowości)
             finally:
                 lock.release()
         else:
             results.append(item)
+
+            # tutaj ma sie zepsuc
+            tmp = counter      # 1. wczytaj
+            tmp += 1           # 2. policz
+            counter = tmp      # 3. zapisz (3 operacje, zero atomowości)
+
 
     return results
 
@@ -65,30 +79,56 @@ def seq_count_records(records: list[dict]):
     return count_records(records)
 
 @measure_time
-def multiprocces_count_records(records, n_procs = None):
+def multiprocces_count_records(records, n_procs=None):
     if n_procs is None:
         n_procs = cpu_count()
-    
+
     # chunking data
-    chunks = []
-
+    max_chunk = 50_000
     size = (len(records) + n_procs - 1) // n_procs
+    size = min(size, max_chunk)
 
+    chunks = []
     for i in range(0, len(records), size):
         chunks.append(records[i:i+size])
 
     with Pool(processes=n_procs) as pool:
-        partial_results = pool.map(count_records,chunks)
+        partial_results = pool.map(count_records, chunks)
 
     results = []
     for result in partial_results:
         results.extend(result)
-    
-    results = list(sorted(results, key=lambda x: x["id"]))
+
+    results = sorted(results, key=lambda x: x["id"])
     return results
 
 @measure_time
-def thread_count_records(records, n_threads = 1): return records
+def thread_count_records(records, n_threads = 1, synchronized = True):
+    threads = []
+    results = []
+
+    global counter
+    counter = 0
+
+    if (synchronized):
+        lock = threading.Lock()
+    else:
+        lock = None
+
+    chunk_size = (len(records) + n_threads - 1) // n_threads
+    for i in range(0, len(records), chunk_size):
+        chunk_i = records[i:i+chunk_size]
+        thread = threading.Thread(target=count_records, kwargs={"records":chunk_i, "results_in": results, "lock": lock}) 
+        threads.append(thread)
+        thread.start()
+    
+    for thread in threads:
+        thread.join()
+
+    print(f"[INFO] Global counter for {"synchronized" if (synchronized) else "not synchronized"}: {counter}")
+
+    return results
+
 
 def compare(name_a, results_a, name_b, results_b):
     if len(results_a) != len(results_b):
@@ -109,23 +149,18 @@ def compare(name_a, results_a, name_b, results_b):
     print(f"[CHECK] {name_a} vs {name_b}: wszystkie id mają taki sam score: {ok}")
 
 
-
-
-def main():
+if __name__ == "__main__":
+    print(f"GIL: {sys._is_gil_enabled()}")
     print("Generowanie zestawu danych poczatkowych...")
-    records = generate_data(10000)
+    records = generate_data(100000)
     print("Gotowe! Lecimy z obliczeniami!!")
 
     results_seq = seq_count_records(records)
-    results_proc = multiprocces_count_records(records)
-    results_thread = thread_count_records(records)
+    results_proc = multiprocces_count_records(records, n_procs=4)
+    results_thread_safe = thread_count_records(records, n_threads=4, synchronized=True)
+    results_thread_notsafe = thread_count_records(records, n_threads=4, synchronized=False)
 
     compare("sequential", results_seq, "multiprocessing", results_proc)
-    #compare_results("sequential", results_seq, "threading", results_thread)
-
-    return results_seq, results_proc, results_thread
-
-
-if __name__ == "__main__":
-    results_seq, results_proc, results_thread = main()
+    compare("sequential", results_seq, "threading synchronized", results_thread_safe)
+    compare("sequential", results_seq, "threading not synchronized", results_thread_notsafe)
     

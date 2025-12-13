@@ -986,9 +986,12 @@ http-client.private.env.json
 # =-=-=-=-=-=-=-=-=-= Custom User Section =-=-=-=-=-=-=-=-=-=
 test*/
 test.*
+*.test
 *.log
 *.out
 .vstags
+*.csv
+*.db
 
 .handler.sh
 counter.txt
@@ -999,6 +1002,8 @@ img_test/
 
 enc_pan.txt
 enc_potop.txt
+pan.txt
+potop.txt
 
 matrix1.txt
 matrix2.txt

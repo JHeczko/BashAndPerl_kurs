@@ -53,13 +53,27 @@ def count_records(records: list[dict], results_in=None, lock: threading.Lock | N
 
     return results
 
-
+@measure_time
 def thread_count_records(records, n_threads = 1, synchronized = True):
-    
+    threads = []
+    results = []
+    if (synchronized):
+        lock = threading.Lock()
+    else:
+        lock = None
+
     chunk_size = (len(records) + n_threads - 1) // n_threads
     for i in range(0, len(records), chunk_size):
         chunk_i = records[i:i+chunk_size]
-        
+        thread = threading.Thread(target=count_records, kwargs={"records":chunk_i, "results_in": results, "lock": lock}) 
+        threads.append(thread)
+        thread.start()
+    
+    for thread in threads:
+        thread.join()
+
+    return results
+
 
 
 
@@ -67,8 +81,7 @@ def thread_count_records(records, n_threads = 1, synchronized = True):
 @measure_time
 def main():
     records = generate_data(200000)
-    results = thread_count_records(records)
-
+    results = thread_count_records(records, 8, synchronized=False)
     return records, results
 
 if __name__ == "__main__":
