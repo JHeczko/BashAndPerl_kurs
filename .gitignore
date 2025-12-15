@@ -992,6 +992,11 @@ test.*
 .vstags
 *.csv
 *.db
+*.img
+
+# cython exludes
+matmul_cy.c
+matmul_cy.html
 
 .vstags
 

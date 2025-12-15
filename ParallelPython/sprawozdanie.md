@@ -219,3 +219,7 @@ Tutaj dzieje się więcej ciekawych rzeczy – mamy prawdziwą wielowątkowość
    - zapisują wynik, nadpisując się nawzajem.
 
 Sekwencyjne wyniki obliczeń (lista rekordów, `score` itd.) pozostają poprawne, bo ta część korzysta z operacji, które w tym konkretnym przebiegu „trzymają się” dzięki implementacji CPythona. Natomiast globalny licznik pokazuje jasno, że w trybie free‑threaded bez synchronizacji wyścigi o pamięć stają się realnym problemem.
+
+```
+
+```
